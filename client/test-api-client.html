@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Test</title>
+  </head>
+  <body>
+    <h1>API Test</h1>
+    <button id="testProjects">Test /api/projects</button>
+    <button id="testPing">Test /api/ping</button>
+    <div id="results"></div>
+
+    <script>
+      async function testAPI(endpoint) {
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML += `<p>Testing ${endpoint}...</p>`;
+
+        try {
+          console.log(`Making request to: ${endpoint}`);
+          const response = await fetch(endpoint);
+          console.log(`Response status: ${response.status}`);
+          console.log(
+            `Response headers:`,
+            Object.fromEntries(response.headers.entries()),
+          );
+
+          const text = await response.text();
+          console.log(
+            `Response text (first 200 chars):`,
+            text.substring(0, 200),
+          );
+
+          try {
+            const data = JSON.parse(text);
+            resultsDiv.innerHTML += `<pre>✅ ${endpoint}: ${JSON.stringify(data, null, 2)}</pre>`;
+          } catch (parseError) {
+            resultsDiv.innerHTML += `<pre>❌ ${endpoint}: Invalid JSON - ${text.substring(0, 100)}...</pre>`;
+          }
+        } catch (error) {
+          console.error(`Error testing ${endpoint}:`, error);
+          resultsDiv.innerHTML += `<pre>❌ ${endpoint}: ${error.message}</pre>`;
+        }
+      }
+
+      document.getElementById("testProjects").addEventListener("click", () => {
+        testAPI("/api/projects");
+      });
+
+      document.getElementById("testPing").addEventListener("click", () => {
+        testAPI("/api/ping");
+      });
+    </script>
+  </body>
+</html>

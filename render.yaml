@@ -1,0 +1,43 @@
+services:
+  # XC3 Backend API Server
+  - type: web
+    name: xc3-1
+    runtime: node
+    plan: starter
+    buildCommand: npm run build:server
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: xc3-database
+          property: connectionString
+      - key: CORS_ORIGIN
+        value: https://xc-3-web.vercel.app
+      - key: WEB3_STORAGE_TOKEN
+        sync: false
+      - key: AI_PROVIDER
+        value: local
+      - key: IPFS_ENABLED
+        value: false
+
+  # XC3 Database
+  - type: pserv
+    name: xc3-database
+    databaseName: xc3
+    plan: starter
+# Environment Variables for Reference
+# Set these in your Render dashboard:
+#
+# Backend Service Environment Variables:
+# - DATABASE_URL: (auto-generated from database service)
+# - WEB3_STORAGE_TOKEN: Get from https://web3.storage
+# - CORS_ORIGIN: Your Vercel frontend URL
+#
+# Optional:
+# - IPFS_HOST: 127.0.0.1 (if using local IPFS)
+# - IPFS_PORT: 5001 (if using local IPFS)
+# - IPFS_PROTOCOL: http (if using local IPFS)

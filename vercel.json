@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build:client",
+  "outputDirectory": "dist/spa",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "env": {
+    "VITE_WALLETCONNECT_PROJECT_ID": "0250c69f8e3a9d0ff98eb68297594c84",
+    "VITE_API_URL": "https://xc3-1.onrender.com/api",
+    "VITE_SEPOLIA_REGISTRY": "0x789d35Cc6639C0532fEa41A5CBE3A39aBd6E0aaa",
+    "VITE_SEPOLIA_CREDITS": "0xabcd35Cc6639C0532fEa41A5CBE3A39aBd6E0bbb",
+    "VITE_SEPOLIA_VAULT": "0xdefd35Cc6639C0532fEa41A5CBE3A39aBd6E0ccc",
+    "VITE_POLYGON_AMOY_REGISTRY": "0x111d35Cc6639C0532fEa41A5CBE3A39aBd6E0ddd",
+    "VITE_POLYGON_AMOY_CREDITS": "0x222d35Cc6639C0532fEa41A5CBE3A39aBd6E0eee",
+    "VITE_POLYGON_AMOY_VAULT": "0x333d35Cc6639C0532fEa41A5CBE3A39aBd6E0fff",
+    "VITE_ZETA_TESTNET_REGISTRY": "0x742d35Cc6639C0532fEa41A5CBE3A39aBd6E0555",
+    "VITE_ZETA_TESTNET_CREDITS": "0x123d35Cc6639C0532fEa41A5CBE3A39aBd6E0888",
+    "VITE_ZETA_TESTNET_VAULT": "0x456d35Cc6639C0532fEa41A5CBE3A39aBd6E0999"
+  },
+  "rewrites": [
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
