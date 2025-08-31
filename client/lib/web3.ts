@@ -71,8 +71,12 @@ const getConnectors = () => {
     }),
   ];
 
-  // Only add WalletConnect if we have a valid project ID
-  if (projectId && projectId !== "xc3-demo" && projectId.length > 10) {
+  // Detect iframe environment (MetaMask injection usually unavailable in iframes)
+  const inIframe =
+    typeof window !== "undefined" && window.top && window.top !== window.self;
+
+  // Only add WalletConnect if we have a valid project ID and NOT inside an iframe
+  if (!inIframe && projectId && projectId !== "xc3-demo" && projectId.length > 10) {
     try {
       baseConnectors.push(
         walletConnect({
