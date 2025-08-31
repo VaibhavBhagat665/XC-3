@@ -17,7 +17,7 @@ import {
 import { ConnectKitButton } from "connectkit";
 import { useWeb3 } from "../hooks/useWeb3";
 import { useToast } from "../hooks/use-toast";
-import { lendingApi, errorHandler } from "../lib/api";
+import { lendingApi, errorHandler, getApiBase } from "../lib/api";
 import {
   Wallet,
   TrendingUp,
@@ -84,11 +84,62 @@ export default function Lending() {
     amount: "",
   });
 
-  // Load positions from API
+  // Live updates: SSE for user positions with 5s polling fallback
   useEffect(() => {
-    if (isConnected && address) {
+    if (!isConnected || !address) return;
+
+    let pollId: any = null;
+    let es: EventSource | null = null;
+
+    const startPolling = () => {
+      if (pollId) return;
       loadPositions();
+      pollId = setInterval(loadPositions, 5000);
+    };
+
+    try {
+      const base = getApiBase();
+      const url = `${base.replace(/\/$/, "")}/lending/stream?userAddress=${encodeURIComponent(address)}`;
+      es = new EventSource(url);
+
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data || "[]");
+          const convertedPositions = (Array.isArray(data) ? data : []).map((pos: any) => ({
+            id: pos.id,
+            collateralTokenId: pos.credit_id || pos.id,
+            collateralAmount: pos.collateral_amount || 100,
+            collateralValue: (pos.collateral_amount || 100) * 25.5,
+            borrowedAmount: pos.borrowed_amount || 1530,
+            borrowedCurrency: "xc3USD",
+            interestRate: pos.interest_rate || 0.08,
+            healthFactor: pos.health_factor || 1.45,
+            liquidationThreshold: pos.liquidation_threshold || 0.8,
+            projectName: pos.project_name || "Carbon Credit Project",
+            status: (pos.status as "active" | "repaid" | "liquidated") || "active",
+            createdAt: pos.created_at || new Date().toISOString(),
+            lastUpdated: pos.updated_at || new Date().toISOString(),
+          }));
+          setPositions(convertedPositions);
+          setLoading(false);
+        } catch (e) {
+          console.warn("Failed to parse lending SSE data:", e);
+        }
+      };
+
+      es.onerror = () => {
+        es?.close();
+        es = null;
+        startPolling();
+      };
+    } catch (e) {
+      startPolling();
     }
+
+    return () => {
+      if (pollId) clearInterval(pollId);
+      if (es) es.close();
+    };
   }, [isConnected, address]);
 
   const loadPositions = async () => {
@@ -253,11 +304,26 @@ export default function Lending() {
               </p>
             </div>
             <ConnectKitButton.Custom>
-              {({ show }) => (
-                <Button className="btn-neon" onClick={show}>
-                  Connect Wallet
-                </Button>
-              )}
+              {({ show }) => {
+                const { connect, connectors } = useWeb3();
+                return (
+                  <Button
+                    className="btn-neon"
+                    onClick={() => {
+                      const mm = (connectors as any[])?.find(
+                        (c) => c.id === "metaMask" && (c as any).ready,
+                      );
+                      const injected = (connectors as any[])?.find(
+                        (c) => c.id === "injected" && (c as any).ready,
+                      );
+                      if (mm || injected) connect(mm || injected);
+                      else show();
+                    }}
+                  >
+                    Connect Wallet
+                  </Button>
+                );
+              }}
             </ConnectKitButton.Custom>
           </div>
         </div>
