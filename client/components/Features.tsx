@@ -54,7 +54,7 @@ const features = [
     icon: Globe,
     title: "Multi-Chain Bridge",
     description:
-      "Connect and transfer assets across 15+ blockchains. Ethereum, BSC, Polygon, Avalanche, and more.",
+      "Connect and transfer assets across multiple blockchains. Ethereum, Polygon, ZetaChain and more.",
     color: "cyan",
     gradient: "from-cyan-400/20 via-blue-400/15 to-sky-400/20",
     border: "border-cyan-400/30",
@@ -96,13 +96,13 @@ const advancedFeatures = [
     icon: Smartphone,
     title: "Mobile First",
     description: "Native iOS and Android apps",
-    metric: "1M+ Downloads",
+    metric: "Coming Soon",
   },
   {
     icon: BarChart3,
     title: "Advanced Trading",
     description: "Professional trading tools and API",
-    metric: "$50B+ Volume",
+    metric: "Beta Testing",
   },
   {
     icon: Layers,
@@ -311,7 +311,7 @@ export function Features() {
               </h3>
 
               <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-                Join millions of users who trust us with their digital assets.
+                Experience the future of carbon credit trading.
                 Start your Web3 journey today.
               </p>
 
