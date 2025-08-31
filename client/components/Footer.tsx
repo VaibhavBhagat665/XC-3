@@ -69,12 +69,6 @@ const socialLinks = [
   },
 ];
 
-const stats = [
-  { label: "Users", value: "10M+", icon: Users },
-  { label: "Transactions", value: "$50B+", icon: Zap },
-  { label: "Security", value: "99.9%", icon: Shield },
-  { label: "Countries", value: "150+", icon: Globe },
-];
 
 export function Footer() {
   return (
@@ -128,14 +122,14 @@ export function Footer() {
                     <Zap className="w-6 h-6 text-purple-400" />
                   </motion.div>
                   <h3 className="text-2xl font-black bg-gradient-to-r from-purple-400 via-pink-400 to-mint-400 bg-clip-text text-transparent">
-                    Web3Hub
+                    XC3
                   </h3>
                 </div>
 
                 <p className="text-lg text-muted-foreground leading-relaxed mb-6 max-w-md">
-                  The future of decentralized finance is here.
+                  The future of carbon credit trading is here.
                   <span className="block mt-2 text-purple-400 font-semibold">
-                    Unlock endless possibilities in Web3.
+                    AI-verified, cross-chain carbon credits.
                   </span>
                 </p>
 
@@ -159,39 +153,6 @@ export function Footer() {
                 </div>
               </motion.div>
 
-              {/* Stats */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                viewport={{ once: true }}
-                className="grid grid-cols-2 gap-4"
-              >
-                {stats.map((stat, index) => (
-                  <motion.div
-                    key={stat.label}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                    viewport={{ once: true }}
-                    className="group"
-                  >
-                    <div className="flex items-center space-x-3 p-3 bg-card/30 border border-border/30 rounded-lg hover:border-purple-500/30 transition-all duration-300">
-                      <div className="w-8 h-8 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <stat.icon className="w-4 h-4 text-purple-400" />
-                      </div>
-                      <div>
-                        <div className="text-lg font-bold text-foreground">
-                          {stat.value}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {stat.label}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
             </div>
 
             {/* Links Section */}
@@ -345,12 +306,12 @@ export function Footer() {
             {/* Copyright */}
             <div className="flex items-center space-x-4">
               <div className="text-muted-foreground">
-                © 2024 Web3Hub. All rights reserved.
+                © 2024 XC3. All rights reserved.
               </div>
               <div className="flex items-center space-x-2 text-sm text-purple-400">
                 <span>Built with</span>
                 <Heart className="w-4 h-4 text-pink-400 animate-pulse" />
-                <span>for Web3</span>
+                <span>for sustainability</span>
               </div>
             </div>
 
