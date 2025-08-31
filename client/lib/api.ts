@@ -93,6 +93,8 @@ const getApiUrl = (endpoint: string) => {
   return `${base}${path}`;
 };
 
+export const getApiBase = () => RUNTIME_API_BASE;
+
 // Generic API call function with improved error handling
 async function apiCall<T>(
   endpoint: string,
@@ -496,12 +498,17 @@ export const marketApi = {
     listingId: number,
     data: {
       buyerAddress: string;
-      tokenAmount: number;
+      tokenAmount?: number;
+      amount?: number;
     },
   ): Promise<ApiResponse<any>> => {
+    const payload: any = {
+      buyerAddress: data.buyerAddress,
+      amount: typeof data.amount === "number" ? data.amount : data.tokenAmount,
+    };
     return apiCall<any>(`/market/listings/${listingId}/purchase`, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   },
 
@@ -570,11 +577,15 @@ export const lendingApi = {
       amount: number;
     },
   ): Promise<ApiResponse<LendingPosition>> => {
+    const payload: any = {
+      additionalCollateral: data.amount,
+      transactionHash: undefined,
+    };
     return apiCall<LendingPosition>(
       `/lending/positions/${positionId}/collateral`,
       {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       },
     );
   },
@@ -587,9 +598,13 @@ export const lendingApi = {
       amount: number;
     },
   ): Promise<ApiResponse<LendingPosition>> => {
+    const payload: any = {
+      repaymentAmount: data.amount,
+      transactionHash: undefined,
+    };
     return apiCall<LendingPosition>(`/lending/positions/${positionId}/repay`, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   },
 
