@@ -1,6 +1,6 @@
 import { http, createConfig } from "wagmi";
 import { mainnet, sepolia, polygon, polygonAmoy } from "wagmi/chains";
-import { injected, metaMask } from "wagmi/connectors";
+import { injected, metaMask, coinbaseWallet, walletConnect } from "wagmi/connectors";
 
 // ZetaChain configuration
 export const zetaChainTestnet = {
@@ -56,7 +56,15 @@ const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
 
 // Create connectors array conditionally
 const getConnectors = () => {
-  const baseConnectors = [injected(), metaMask()];
+  const baseConnectors = [
+    injected(),
+    metaMask(),
+    coinbaseWallet({
+      appName: "XC3 - Cross-Chain Carbon Credits",
+      appLogoUrl: "/favicon.svg",
+      headlessMode: false,
+    }),
+  ];
 
   // Optional WalletConnect gate (explicit opt-in)
   const enableWC = import.meta.env.VITE_ENABLE_WALLETCONNECT === "true";
@@ -74,8 +82,6 @@ const getConnectors = () => {
     projectId.length > 10
   ) {
     try {
-      // Dynamically import to avoid bundling when disabled
-      const { walletConnect } = require("wagmi/connectors");
       baseConnectors.push(
         walletConnect({
           projectId,
