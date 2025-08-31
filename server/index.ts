@@ -24,6 +24,7 @@ import {
   cancelListing,
   getMarketStats,
   getUserTradingHistory,
+  streamMarketListings,
 } from "./routes/market";
 import {
   getLendingPositions,
@@ -33,6 +34,7 @@ import {
   liquidatePosition,
   getLendingStats,
   getUserPositions,
+  streamLendingPositions,
 } from "./routes/lending";
 import {
   getUserBalance,
@@ -227,6 +229,7 @@ export function createServer() {
   });
 
   // Market routes
+  app.get("/market/stream", streamMarketListings);
   app.get("/market/listings", getMarketListings);
   app.post("/market/listings", createListing);
   app.post("/market/listings/:id/purchase", purchaseCredits);
@@ -235,6 +238,7 @@ export function createServer() {
   app.get("/market/history/:address", getUserTradingHistory);
 
   // Lending routes
+  app.get("/lending/stream", streamLendingPositions);
   app.get("/lending/positions", getLendingPositions);
   app.post("/lending/positions", createPosition);
   app.post("/lending/positions/:id/collateral", addCollateral);
