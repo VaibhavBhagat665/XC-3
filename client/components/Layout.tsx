@@ -46,12 +46,6 @@ function Footer() {
     { name: "Twitter", href: "#", icon: MessageCircle, color: "cyan" },
   ];
 
-  const liveMetrics = [
-    { label: "Network Health", value: "99.9%", color: "green", icon: "🟢" },
-    { label: "Active Users", value: "10.2K+", color: "cyan", icon: "👥" },
-    { label: "Credits Minted", value: "500K+", color: "purple", icon: "🎯" },
-    { label: "Total Volume", value: "$12.8M", color: "yellow", icon: "💰" },
-  ];
 
   return (
     <footer className="relative bg-gradient-to-br from-background via-card to-background border-t-2 border-border/20 overflow-hidden">
@@ -111,26 +105,6 @@ function Footer() {
             </div>
           </div>
 
-          {/* Live Metrics */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {liveMetrics.map((metric, index) => (
-              <div key={index} className="text-center group">
-                <div
-                  className={`text-2xl mb-2 group-hover:scale-110 transition-transform duration-300`}
-                >
-                  {metric.icon}
-                </div>
-                <div
-                  className={`text-lg font-black text-${metric.color}-400 mb-1`}
-                >
-                  {metric.value}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {metric.label}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Links Section - Clean Layout */}
