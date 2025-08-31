@@ -1,11 +1,6 @@
 import { http, createConfig } from "wagmi";
 import { mainnet, sepolia, polygon, polygonAmoy } from "wagmi/chains";
-import {
-  injected,
-  metaMask,
-  coinbaseWallet,
-  walletConnect,
-} from "wagmi/connectors";
+import { injected, metaMask } from "wagmi/connectors";
 
 // ZetaChain configuration
 export const zetaChainTestnet = {
@@ -61,23 +56,26 @@ const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
 
 // Create connectors array conditionally
 const getConnectors = () => {
-  const baseConnectors = [
-    injected(),
-    metaMask(),
-    coinbaseWallet({
-      appName: "XC3 - Cross-Chain Carbon Credits",
-      appLogoUrl: "/favicon.svg",
-      headlessMode: false,
-    }),
-  ];
+  const baseConnectors = [injected(), metaMask()];
+
+  // Optional WalletConnect gate (explicit opt-in)
+  const enableWC = import.meta.env.VITE_ENABLE_WALLETCONNECT === "true";
 
   // Detect iframe environment (MetaMask injection usually unavailable in iframes)
   const inIframe =
     typeof window !== "undefined" && window.top && window.top !== window.self;
 
-  // Only add WalletConnect if we have a valid project ID and NOT inside an iframe
-  if (!inIframe && projectId && projectId !== "xc3-demo" && projectId.length > 10) {
+  // Only add WalletConnect if explicitly enabled, has valid project ID, and not inside an iframe
+  if (
+    enableWC &&
+    !inIframe &&
+    projectId &&
+    projectId !== "xc3-demo" &&
+    projectId.length > 10
+  ) {
     try {
+      // Dynamically import to avoid bundling when disabled
+      const { walletConnect } = require("wagmi/connectors");
       baseConnectors.push(
         walletConnect({
           projectId,
