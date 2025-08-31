@@ -1,4 +1,3 @@
-// Updated
 import { Hero } from "../components/Hero";
 import { Features } from "../components/Features";
 import { HowItWorks } from "../components/HowItWorks";
@@ -9,16 +8,12 @@ export default function Index() {
   return (
     <Layout>
       <div className="relative">
-        {/* Hero Section */}
         <Hero />
 
-        {/* Features Section */}
         <Features />
 
-        {/* How It Works Section */}
         <HowItWorks />
 
-        {/* Footer */}
         <Footer />
       </div>
     </Layout>
