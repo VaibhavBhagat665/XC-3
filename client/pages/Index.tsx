@@ -1,9 +1,7 @@
 // Updated
 import { Hero } from "../components/Hero";
 import { Features } from "../components/Features";
-import { Security } from "../components/Security";
-import { Community } from "../components/Community";
-import { Rewards } from "../components/Rewards";
+import { HowItWorks } from "../components/HowItWorks";
 import { Footer } from "../components/Footer";
 import { Layout } from "../components/Layout";
 
@@ -17,14 +15,8 @@ export default function Index() {
         {/* Features Section */}
         <Features />
 
-        {/* Security & Reliability Section */}
-        <Security />
-
-        {/* Community & Innovation Section */}
-        <Community />
-
-        {/* Rewards/Benefits Section */}
-        <Rewards />
+        {/* How It Works Section */}
+        <HowItWorks />
 
         {/* Footer */}
         <Footer />
