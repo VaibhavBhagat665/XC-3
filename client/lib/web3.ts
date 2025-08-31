@@ -2,13 +2,6 @@ import { http, createConfig } from "wagmi";
 import { mainnet, sepolia, polygon, polygonAmoy } from "wagmi/chains";
 import { injected, metaMask, coinbaseWallet, walletConnect } from "wagmi/connectors";
 
-const ZETA_MAINNET_RPC =
-  import.meta.env.VITE_ZETA_MAINNET_RPC ||
-  "https://zetachain-evm.publicnode.com";
-const ZETA_TESTNET_RPC =
-  import.meta.env.VITE_ZETA_TESTNET_RPC ||
-  "https://zetachain-evm-testnet.blockpi.network/v1/rpc/public";
-
 // ZetaChain configuration
 export const zetaChainTestnet = {
   id: 7001,
@@ -20,11 +13,11 @@ export const zetaChainTestnet = {
     symbol: "ZETA",
   },
   rpcUrls: {
-    public: { http: [ZETA_TESTNET_RPC] },
-    default: { http: [ZETA_TESTNET_RPC] },
+    public: { http: ["https://zetachain-evm.blockpi.network/v1/rpc/public"] },
+    default: { http: ["https://zetachain-evm.blockpi.network/v1/rpc/public"] },
   },
   blockExplorers: {
-    default: { name: "ZetaScan (Testnet)", url: "https://zetachain.blockscout.com" },
+    default: { name: "ZetaScan", url: "https://zetachain.blockscout.com" },
   },
   contracts: {
     multicall3: {
@@ -33,7 +26,6 @@ export const zetaChainTestnet = {
     },
   },
 } as const;
-
 
 export const zetaChainMainnet = {
   id: 7000,
@@ -45,8 +37,8 @@ export const zetaChainMainnet = {
     symbol: "ZETA",
   },
   rpcUrls: {
-    public: { http: [ZETA_MAINNET_RPC] },
-    default: { http: [ZETA_MAINNET_RPC] },
+    public: { http: ["https://zetachain-evm.blockpi.network/v1/rpc/public"] },
+    default: { http: ["https://zetachain-evm.blockpi.network/v1/rpc/public"] },
   },
   blockExplorers: {
     default: { name: "ZetaScan", url: "https://zetachain.blockscout.com" },
