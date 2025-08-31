@@ -51,7 +51,12 @@ export const zetaChainMainnet = {
   blockExplorers: {
     default: { name: "ZetaScan", url: "https://zetachain.blockscout.com" },
   },
-  contracts
+  contracts: {
+    multicall3: {
+      address: "0xcA11bde05977b3631167028862bE2a173976CA11",
+      blockCreated: 1565020,
+    },
+  },
 } as const;
 
 // Project ID for WalletConnect - only use if valid
