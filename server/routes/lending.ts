@@ -5,6 +5,43 @@ import {
   activityQueries,
 } from "../lib/database";
 
+// Server-Sent Events: stream lending positions (poll DB every 5s)
+export const streamLendingPositions: RequestHandler = async (req, res) => {
+  try {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    (res as any).flushHeaders?.();
+
+    const { userAddress, status, limit = 50, offset = 0 } = req.query;
+
+    const send = async () => {
+      try {
+        const options = {
+          userAddress: (userAddress as string) || undefined,
+          status: (status as string) || undefined,
+          limit: parseInt(limit as string),
+          offset: parseInt(offset as string),
+        };
+        const positions = await lendingPositionQueries.getAll(options);
+        res.write(`data: ${JSON.stringify(positions)}\n\n`);
+      } catch (e) {
+        console.warn("[SSE] lending stream error:", e instanceof Error ? e.message : e);
+      }
+    };
+
+    await send();
+    const interval = setInterval(send, 5000);
+
+    req.on("close", () => {
+      clearInterval(interval);
+    });
+  } catch (error) {
+    console.error("Error setting up lending SSE:", error);
+    res.status(500).end();
+  }
+};
+
 // Get all lending positions
 export const getLendingPositions: RequestHandler = async (req, res) => {
   try {
@@ -121,10 +158,11 @@ export const createPosition: RequestHandler = async (req, res) => {
 export const addCollateral: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
-    const { additionalCollateral, transactionHash } = req.body;
+    const { additionalCollateral, amount, transactionHash } = req.body;
     const positionId = parseInt(id);
+    const addAmount = typeof additionalCollateral === "number" ? additionalCollateral : amount;
 
-    if (!additionalCollateral || additionalCollateral <= 0) {
+    if (!addAmount || addAmount <= 0) {
       return res.status(400).json({
         success: false,
         error: "Additional collateral amount must be positive",
@@ -149,7 +187,7 @@ export const addCollateral: RequestHandler = async (req, res) => {
 
     // Calculate new values
     const newCollateralAmount =
-      parseFloat(position.collateral_amount.toString()) + additionalCollateral;
+      parseFloat(position.collateral_amount.toString()) + addAmount;
     const newHealthFactor =
       (newCollateralAmount * position.liquidation_threshold) /
       parseFloat(position.borrowed_amount.toString());
@@ -167,7 +205,7 @@ export const addCollateral: RequestHandler = async (req, res) => {
       credit_id: position.credit_id,
       details: {
         position_id: positionId,
-        additional_collateral: additionalCollateral,
+        additional_collateral: addAmount,
         new_collateral_amount: newCollateralAmount,
         new_health_factor: newHealthFactor,
         transaction_hash: transactionHash,
@@ -193,10 +231,11 @@ export const addCollateral: RequestHandler = async (req, res) => {
 export const repayLoan: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
-    const { repaymentAmount, transactionHash } = req.body;
+    const { repaymentAmount, amount, transactionHash } = req.body;
     const positionId = parseInt(id);
+    const repay = typeof repaymentAmount === "number" ? repaymentAmount : amount;
 
-    if (!repaymentAmount || repaymentAmount <= 0) {
+    if (!repay || repay <= 0) {
       return res.status(400).json({
         success: false,
         error: "Repayment amount must be positive",
@@ -223,14 +262,14 @@ export const repayLoan: RequestHandler = async (req, res) => {
       position.borrowed_amount.toString(),
     );
 
-    if (repaymentAmount > currentBorrowedAmount) {
+    if (repay > currentBorrowedAmount) {
       return res.status(400).json({
         success: false,
         error: "Repayment amount exceeds borrowed amount",
       });
     }
 
-    const newBorrowedAmount = currentBorrowedAmount - repaymentAmount;
+    const newBorrowedAmount = currentBorrowedAmount - repay;
     const isFullRepayment = newBorrowedAmount <= 0.01; // Consider full repayment if very small amount remains
 
     // Calculate new health factor
@@ -265,7 +304,7 @@ export const repayLoan: RequestHandler = async (req, res) => {
       credit_id: position.credit_id,
       details: {
         position_id: positionId,
-        repayment_amount: repaymentAmount,
+        repayment_amount: repay,
         remaining_borrowed: newBorrowedAmount,
         new_health_factor: newHealthFactor,
         transaction_hash: transactionHash,
