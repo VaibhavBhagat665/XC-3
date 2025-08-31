@@ -1,6 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
@@ -116,44 +115,69 @@ Respond in JSON format with this structure:
     } catch (parseError) {
       console.error("Failed to parse Gemini response:", parseError);
 
-      // Fallback analysis based on content length and keywords
       const fallbackScore = calculateFallbackScore(
         documentText,
         projectContext,
       );
 
+      const placeholder = looksLikePlaceholderExtraction(documentText);
+      const carbonRelevant = isCarbonRelevant(documentText);
+
       return {
         score: fallbackScore,
-        confidence: 70,
-        explanation: `Document analysis completed. ${documentText.length > 1000 ? "Comprehensive documentation provided." : "Limited documentation available."} Gemini AI processing encountered parsing issues, using fallback analysis.`,
+        confidence: carbonRelevant && !placeholder ? 70 : 55,
+        explanation:
+          placeholder
+            ? "Only file metadata available; actual text not extracted. Using conservative local analysis."
+            : `Document analysis completed. ${documentText.length > 1000 ? "Comprehensive documentation provided." : "Limited documentation available."} Gemini AI parsing issues; used fallback analysis.`,
         riskLevel:
-          fallbackScore > 80 ? "low" : fallbackScore > 60 ? "medium" : "high",
+          !carbonRelevant || placeholder
+            ? "high"
+            : fallbackScore > 80
+              ? "low"
+              : fallbackScore > 60
+                ? "medium"
+                : "high",
         recommendations: [
-          "Consider providing more detailed documentation",
+          "Provide machine-readable project documentation (PDF with text or DOCX)",
           "Verify methodology compliance",
         ],
         detectedElements: extractKeyElements(documentText),
-        verificationFlags: fallbackScore < 70 ? ["Limited documentation"] : [],
+        verificationFlags: [
+          ...(!carbonRelevant ? ["Content not carbon-related"] : []),
+          ...(placeholder ? ["Text extraction incomplete"] : []),
+          ...(fallbackScore < 70 ? ["Limited documentation"] : []),
+        ],
       };
     }
   } catch (error) {
     console.error("Gemini AI analysis failed:", error);
 
-    // Robust fallback for any Gemini failures
     const fallbackScore = calculateFallbackScore(documentText, projectContext);
+    const placeholder = looksLikePlaceholderExtraction(documentText);
+    const carbonRelevant = isCarbonRelevant(documentText);
 
     return {
       score: fallbackScore,
-      confidence: 60,
+      confidence: carbonRelevant && !placeholder ? 60 : 50,
       explanation:
-        "Document processed using local verification algorithms. Gemini AI enhancement temporarily unavailable.",
-      riskLevel: fallbackScore > 75 ? "low" : "medium",
+        "Document processed using local verification algorithms. Gemini AI enhancement unavailable.",
+      riskLevel:
+        !carbonRelevant || placeholder
+          ? "high"
+          : fallbackScore > 75
+            ? "low"
+            : "medium",
       recommendations: [
+        "Provide machine-readable supporting documents",
         "Review methodology alignment",
-        "Verify measurement protocols",
       ],
       detectedElements: extractKeyElements(documentText),
-      verificationFlags: ["AI verification unavailable"],
+      verificationFlags: [
+        "AI verification unavailable",
+        ...(!carbonRelevant ? ["Content not carbon-related"] : []),
+        ...(placeholder ? ["Text extraction incomplete"] : []),
+      ],
     };
   }
 }
@@ -170,6 +194,8 @@ export async function verifyProjectWithGemini(
 
   try {
     const documentAnalyses: DocumentAnalysis[] = [];
+
+    const geminiAvailable = !!process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 0;
 
     // Analyze each document
     for (const doc of documents) {
@@ -228,12 +254,16 @@ Vintage Year: ${projectData.vintageYear}
       (a) => a.recommendations,
     );
 
-    const recommendation =
+    let recommendation: ProjectVerification["recommendation"] =
       overallScore >= 75 && overallRiskLevel !== "high"
         ? "approve"
         : overallScore < 60 || overallRiskLevel === "high"
           ? "reject"
           : "review_required";
+
+    if (!geminiAvailable && recommendation === "approve") {
+      recommendation = "review_required";
+    }
 
     const processingTime = Date.now() - startTime;
 
@@ -263,7 +293,7 @@ Vintage Year: ${projectData.vintageYear}
       documentAnalyses: [
         {
           score: fallbackScore,
-          confidence: 70,
+          confidence: 65,
           explanation:
             "Project verified using local algorithms. All core criteria evaluated.",
           riskLevel: fallbackScore > 75 ? "low" : "medium",
@@ -280,7 +310,7 @@ Vintage Year: ${projectData.vintageYear}
         factors: ["Local verification only"],
         mitigation: ["Enhanced due diligence recommended"],
       },
-      recommendation: fallbackScore >= 70 ? "approve" : "review_required",
+      recommendation: "review_required",
       processingTime: Date.now() - startTime,
     };
   }
@@ -293,14 +323,19 @@ function calculateFallbackScore(
   documentText: string,
   projectContext: any,
 ): number {
-  let score = 60; // Base score
+  let score = 30; // More conservative base score
 
-  // Document length bonus
-  if (documentText.length > 2000) score += 15;
-  else if (documentText.length > 1000) score += 10;
-  else if (documentText.length > 500) score += 5;
+  const placeholder = looksLikePlaceholderExtraction(documentText);
+  const carbonRelevant = isCarbonRelevant(documentText);
 
-  // Keyword analysis
+  // Document length bonus (only if not placeholder)
+  if (!placeholder) {
+    if (documentText.length > 2000) score += 10;
+    else if (documentText.length > 1000) score += 7;
+    else if (documentText.length > 500) score += 3;
+  }
+
+  // Keyword analysis (stronger signal)
   const keywords = [
     "carbon",
     "co2",
@@ -324,14 +359,23 @@ function calculateFallbackScore(
     documentText.toLowerCase().includes(keyword),
   ).length;
 
-  score += Math.min(20, foundKeywords * 2);
+  score += Math.min(25, foundKeywords * 5);
 
-  // Project completeness bonus
+  // Penalize non-relevant/placeholder content
+  if (!carbonRelevant) score -= 15;
+  if (placeholder) score -= 20;
+
+  // Project completeness bonus (reduced weight)
   if (projectContext.estimatedTCO2e && projectContext.estimatedTCO2e > 0)
-    score += 5;
+    score += 3;
   if (projectContext.methodology && projectContext.methodology.length > 10)
-    score += 5;
-  if (projectContext.location && projectContext.location.length > 5) score += 3;
+    score += 3;
+  if (projectContext.location && projectContext.location.length > 5) score += 2;
+
+  // Cap scores when content isn't clearly relevant
+  if (!carbonRelevant || placeholder) {
+    score = Math.min(score, 55);
+  }
 
   return Math.max(0, Math.min(100, score));
 }
@@ -385,6 +429,48 @@ function calculateProjectFallbackScore(
   else if (projectData.estimatedTCO2e > 10000) score += 3;
 
   return Math.max(0, Math.min(100, score));
+}
+
+function looksLikePlaceholderExtraction(text: string): boolean {
+  const t = text.toLowerCase();
+  return (
+    t.includes("content extraction requires") ||
+    t.includes("visual content, ocr capability") ||
+    t.includes("binary content, specialized parser") ||
+    t.includes("text extraction failed") ||
+    t.startsWith("pdf document:") ||
+    t.startsWith("office document:") ||
+    t.startsWith("image file:")
+  );
+}
+
+function isCarbonRelevant(text: string): boolean {
+  const t = text.toLowerCase();
+  const signals = [
+    "carbon",
+    "co2",
+    "emission",
+    "offset",
+    "mrv",
+    "baseline",
+    "additionality",
+    "permanence",
+    "leakage",
+    "sequestration",
+    "vcs",
+    "verra",
+    "gold standard",
+    "acr",
+    "car",
+    "redd",
+    "afforestation",
+    "reforestation",
+    "biochar",
+    "methane",
+    "renewable",
+  ];
+  const count = signals.filter((s) => t.includes(s)).length;
+  return count >= 2; // require at least two domain signals
 }
 
 function extractKeyElements(text: string): string[] {
