@@ -20,7 +20,7 @@
 
 - [🌟 What is XC3?](#-what-is-xc3)
 - [🔥 The Problem](#-the-problem)
-- [⚡ Our Solution](#-our-solution)
+- [⚡ My Solution](#-our-solution)
 - [🏗️ Architecture](#️-architecture)
 - [🚀 Getting Started](#-getting-started)
 - [💻 Tech Stack](#-tech-stack)
@@ -72,7 +72,7 @@ The global carbon credit market faces significant challenges:
    - No DeFi integration
    - Limited cross-chain functionality
 
-## ⚡ Our Solution
+## ⚡ My Solution
 
 **XC3 demonstrates solutions to carbon credit industry challenges:**
 
@@ -335,3 +335,4 @@ For security vulnerabilities, please email vaibhavbhagat7461@gmail.com instead o
 **Making carbon credits accessible through innovative technology** 🌱
 
 </div>
+
