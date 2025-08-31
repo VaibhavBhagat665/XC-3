@@ -206,7 +206,7 @@ export function Hero() {
                 icon: Globe,
                 title: "Cross-Chain Ready",
                 description:
-                  "Seamlessly interact across 15+ blockchain networks",
+                  "Seamlessly interact across multiple blockchain networks",
                 color: "mint",
                 gradient: "from-mint-400/20 to-cyan-400/20",
                 border: "border-mint-400/30",
