@@ -13,6 +13,7 @@ import {
 } from "wagmi";
 import {
   zetaChainTestnet,
+  zetaChainMainnet,
   CONTRACTS,
   CARBON_CREDIT_ABI,
   REGISTRY_ABI,
@@ -26,16 +27,52 @@ export function useWeb3() {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
 
-  const isZetaChain = chainId === zetaChainTestnet.id;
+  const isZetaChain = chainId === zetaChainTestnet.id || chainId === zetaChainMainnet.id;
+
+  const addChainIfNeeded = async (chain: any) => {
+    const hexId = "0x" + chain.id.toString(16);
+    try {
+      // @ts-ignore
+      await window.ethereum?.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: hexId,
+            chainName: chain.name,
+            nativeCurrency: chain.nativeCurrency,
+            rpcUrls: chain.rpcUrls?.default?.http || [],
+            blockExplorerUrls: [chain.blockExplorers?.default?.url].filter(Boolean),
+          },
+        ],
+      });
+    } catch (e) {
+      console.warn("wallet_addEthereumChain failed:", e);
+    }
+  };
+
+  const safeSwitch = async (target: any) => {
+    try {
+      await switchChain({ chainId: target.id });
+    } catch (err: any) {
+      if (err?.code === 4902 || /unrecognized|not available/i.test(err?.message || "")) {
+        await addChainIfNeeded(target);
+        try {
+          await switchChain({ chainId: target.id });
+        } catch (e2) {
+          console.warn("Switch after add failed:", e2);
+        }
+      } else {
+        console.warn("Switch chain error:", err);
+      }
+    }
+  };
 
   const switchToZeta = () => {
-    try {
-      if (!isZetaChain) {
-        switchChain({ chainId: zetaChainTestnet.id });
-      }
-    } catch (error) {
-      console.warn("Failed to switch to ZetaChain:", error);
-    }
+    safeSwitch(zetaChainTestnet);
+  };
+
+  const switchToZetaMainnet = () => {
+    safeSwitch(zetaChainMainnet);
   };
 
   const connectWallet = async (connector: any) => {
@@ -63,6 +100,7 @@ export function useWeb3() {
     chainId,
     isZetaChain,
     switchToZeta,
+    switchToZetaMainnet,
     switchChain,
     connectError,
   };
