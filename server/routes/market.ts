@@ -6,6 +6,47 @@ import {
 } from "../lib/database";
 import { localData } from "../lib/localData";
 
+// Server-Sent Events: stream market listings (poll DB every 5s)
+export const streamMarketListings: RequestHandler = async (req, res) => {
+  try {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    (res as any).flushHeaders?.();
+
+    const { status, limit = 50, offset = 0 } = req.query;
+
+    const send = async () => {
+      try {
+        const options = {
+          status: status as string,
+          limit: parseInt(limit as string),
+          offset: parseInt(offset as string),
+        };
+        let listings;
+        try {
+          listings = await marketTransactionQueries.getListings(options);
+        } catch (dbError: any) {
+          listings = localData.getMarketListings(options as any);
+        }
+        res.write(`data: ${JSON.stringify(listings)}\n\n`);
+      } catch (e) {
+        console.warn("[SSE] market stream error:", e instanceof Error ? e.message : e);
+      }
+    };
+
+    await send();
+    const interval = setInterval(send, 5000);
+
+    req.on("close", () => {
+      clearInterval(interval);
+    });
+  } catch (error) {
+    console.error("Error setting up market SSE:", error);
+    res.status(500).end();
+  }
+};
+
 // Get all market listings
 export const getMarketListings: RequestHandler = async (req, res) => {
   try {
@@ -150,7 +191,8 @@ export const createListing: RequestHandler = async (req, res) => {
 export const purchaseCredits: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
-    const { buyerAddress, amount, transactionHash } = req.body;
+    const { buyerAddress, amount: bodyAmount, tokenAmount, transactionHash } = req.body;
+    const amount = typeof bodyAmount === "number" ? bodyAmount : tokenAmount;
     const listingId = parseInt(id);
 
     if (!buyerAddress || !amount) {
