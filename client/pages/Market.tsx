@@ -23,7 +23,7 @@ import {
 import { useWeb3 } from "../hooks/useWeb3";
 import { useToast } from "../hooks/use-toast";
 import { ConnectKitButton } from "connectkit";
-import { marketApi, errorHandler } from "../lib/api";
+import { marketApi, errorHandler, getApiBase } from "../lib/api";
 import {
   ShoppingCart,
   TrendingUp,
@@ -85,9 +85,67 @@ export default function Market() {
     pricePerCredit: "",
   });
 
-  // Load listings from API
+  // Live updates: SSE with 5s polling fallback
   useEffect(() => {
-    loadListings();
+    let pollId: any = null;
+    let es: EventSource | null = null;
+
+    const startPolling = () => {
+      if (pollId) return;
+      loadListings();
+      pollId = setInterval(loadListings, 5000);
+    };
+
+    try {
+      const base = getApiBase();
+      const url = `${base.replace(/\/$/, "")}/market/stream`;
+      es = new EventSource(url);
+
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data || "[]");
+          const convertedListings = (Array.isArray(data) ? data : []).map((listing: any) => ({
+            id: listing.id,
+            tokenId: listing.project_id || listing.id,
+            projectName: listing.project_name || "Carbon Credit Project",
+            location: listing.project_location || "Global",
+            methodology: listing.methodology || "VCS",
+            vintage: listing.vintage_year || 2024,
+            amount: listing.token_amount || listing.amount || 100,
+            pricePerCredit: listing.price_per_token || listing.price_per_credit || 25,
+            totalPrice:
+              listing.total_value ||
+              (listing.token_amount && listing.price_per_token
+                ? listing.token_amount * listing.price_per_token
+                : listing.amount && listing.price_per_credit
+                  ? listing.amount * listing.price_per_credit
+                  : 0),
+            seller: listing.seller_address,
+            sellerName: listing.seller_name || "Anonymous",
+            verificationScore: listing.verification_score || 0.85,
+            createdAt: listing.listed_at || listing.created_at,
+            expiresAt: listing.expires_at,
+          }));
+          setListings(convertedListings);
+          setLoading(false);
+        } catch (e) {
+          console.warn("Failed to parse market SSE data:", e);
+        }
+      };
+
+      es.onerror = () => {
+        es?.close();
+        es = null;
+        startPolling();
+      };
+    } catch (e) {
+      startPolling();
+    }
+
+    return () => {
+      if (pollId) clearInterval(pollId);
+      if (es) es.close();
+    };
   }, []);
 
   const loadListings = async () => {
@@ -295,11 +353,26 @@ export default function Market() {
               </p>
             </div>
             <ConnectKitButton.Custom>
-              {({ show }) => (
-                <Button className="btn-neon" onClick={show}>
-                  Connect Wallet
-                </Button>
-              )}
+              {({ show }) => {
+                const { connect, connectors } = useWeb3();
+                return (
+                  <Button
+                    className="btn-neon"
+                    onClick={() => {
+                      const mm = (connectors as any[])?.find(
+                        (c) => c.id === "metaMask" && (c as any).ready,
+                      );
+                      const injected = (connectors as any[])?.find(
+                        (c) => c.id === "injected" && (c as any).ready,
+                      );
+                      if (mm || injected) connect(mm || injected);
+                      else show();
+                    }}
+                  >
+                    Connect Wallet
+                  </Button>
+                );
+              }}
             </ConnectKitButton.Custom>
           </div>
         </div>
