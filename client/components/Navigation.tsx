@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 
 export function Navigation() {
   const location = useLocation();
-  const { isConnected, switchToZeta, isZetaChain } = useWeb3();
+  const { isConnected, switchToZeta, isZetaChain, connect, connectors } = useWeb3();
   const { chainName, chainColor } = useChainInfo();
   const scrollDirection = useScrollDirection();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -157,20 +157,36 @@ export function Navigation() {
                         )}
                       </span>
                     </Button>
-                    {!isConnected && inIframe && (
-                      <Button
-                        variant="ghost"
-                        className="text-foreground hover:text-cyan-400 hover:bg-cyan-400/10"
-                        onClick={() => {
-                          try {
-                            window.open(window.location.href, "_blank", "noopener");
-                          } catch {}
-                        }}
-                        title="Open in new tab to enable browser wallet"
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Open in new tab
-                      </Button>
+                    {!isConnected && (
+                      <>
+                        {inIframe && (
+                          <Button
+                            variant="ghost"
+                            className="text-foreground hover:text-cyan-400 hover:bg-cyan-400/10"
+                            onClick={() => {
+                              try {
+                                window.open(window.location.href, "_blank", "noopener");
+                              } catch {}
+                            }}
+                            title="Open in new tab to enable browser wallet"
+                          >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Open in new tab
+                          </Button>
+                        )}
+                        <Button
+                          variant="secondary"
+                          className="btn-glow-secondary"
+                          onClick={() => {
+                            const mm = (connectors as any[])?.find((c) => c.id === "metaMask") ||
+                                        (connectors as any[])?.find((c) => c.id === "injected");
+                            if (mm) connect(mm);
+                          }}
+                          title="Connect with browser wallet"
+                        >
+                          Use Browser Wallet
+                        </Button>
+                      </>
                     )}
                   </div>
                 );
