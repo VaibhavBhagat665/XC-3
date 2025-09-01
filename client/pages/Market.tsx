@@ -84,6 +84,31 @@ export default function Market() {
     amount: "",
     pricePerCredit: "",
   });
+  const [ownedCredits, setOwnedCredits] = useState<{ creditId: number; tokenId: number; amount: number; label: string }[]>([]);
+
+  useEffect(() => {
+    const loadOwned = async () => {
+      if (!isConnected || !address) return;
+      try {
+        const resp = await creditsApi.getUserBalance(address);
+        if (resp.success && Array.isArray(resp.data)) {
+          setOwnedCredits(
+            resp.data.map((c: any) => ({
+              creditId: c.creditId,
+              tokenId: c.tokenId,
+              amount: Number(c.amount),
+              label: `#${c.tokenId} • ${c.projectName || "Project"} (${c.vintage || "-"}) • ${Number(c.amount).toLocaleString()} tCO2e`,
+            })),
+          );
+        } else {
+          setOwnedCredits([]);
+        }
+      } catch {
+        setOwnedCredits([]);
+      }
+    };
+    loadOwned();
+  }, [isConnected, address]);
 
   // Live updates: SSE with 5s polling fallback
   useEffect(() => {
@@ -166,8 +191,9 @@ export default function Market() {
             listing.price_per_token || listing.price_per_credit || 25,
           totalPrice:
             listing.total_value ||
-            listing.token_amount * listing.price_per_token ||
-            2500,
+            (listing.token_amount && listing.price_per_token
+              ? listing.token_amount * listing.price_per_token
+              : listing.amount * (listing.price_per_credit || 0)),
           seller: listing.seller_address,
           sellerName: listing.seller_name || "Anonymous",
           verificationScore: listing.verification_score || 0.85,
@@ -416,18 +442,22 @@ export default function Market() {
                 <div className="space-y-6">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="token-id" className="text-white">
-                        Token ID
-                      </Label>
-                      <Input
-                        id="token-id"
+                      <Label className="text-white">Select Credit (owned)</Label>
+                      <Select
                         value={sellData.tokenId}
-                        onChange={(e) =>
-                          setSellData({ ...sellData, tokenId: e.target.value })
-                        }
-                        className="glass border-white/20 text-white"
-                        placeholder="1"
-                      />
+                        onValueChange={(value) => setSellData({ ...sellData, tokenId: value })}
+                      >
+                        <SelectTrigger className="glass border-white/20 text-white">
+                          <SelectValue placeholder={ownedCredits.length ? "Choose token" : "No credits found"} />
+                        </SelectTrigger>
+                        <SelectContent className="glass-card border-white/20">
+                          {ownedCredits.map((c) => (
+                            <SelectItem key={c.creditId} value={String(c.creditId)}>
+                              {c.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
@@ -500,7 +530,8 @@ export default function Market() {
                         isProcessing ||
                         !sellData.tokenId ||
                         !sellData.amount ||
-                        !sellData.pricePerCredit
+                        !sellData.pricePerCredit ||
+                        (ownedCredits.find((c) => String(c.tokenId) === sellData.tokenId)?.amount || 0) < Number(sellData.amount)
                       }
                     >
                       {isProcessing ? (
