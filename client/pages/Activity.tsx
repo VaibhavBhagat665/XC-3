@@ -86,19 +86,7 @@ export default function Activity() {
       if (metricsResponse.success && metricsResponse.data) {
         setMetrics(metricsResponse.data);
       } else {
-        // Fallback to mock data
-        setMetrics({
-          totalCreditsMinted: 2456000,
-          creditsRetired: 856000,
-          totalValueLocked: 12800000,
-          activeProjects: 1247,
-          averageVerificationScore: 0.88,
-          networkStatus: {
-            zetaChain: { status: "online", blockNumber: 12345678 },
-            ethereum: { status: "online", blockNumber: 18765432 },
-            polygon: { status: "online", blockNumber: 9876543 },
-          },
-        });
+        setMetrics(null);
       }
       setMetricsLoading(false);
 
