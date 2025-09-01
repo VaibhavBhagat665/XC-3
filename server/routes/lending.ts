@@ -100,6 +100,25 @@ export const createPosition: RequestHandler = async (req, res) => {
       });
     }
 
+    // Ensure user owns enough on-chain balance for collateral
+    try {
+      const { readErc1155Balance } = await import("../lib/web3");
+      const bal = await readErc1155Balance(
+        Number(credit.chain_id),
+        credit.contract_address as any,
+        (userAddress as string) as any,
+        BigInt(credit.token_id),
+      );
+      if (!bal || Number(bal) < Number(collateralAmount)) {
+        return res.status(400).json({
+          success: false,
+          error: "Insufficient on-chain balance for collateral",
+        });
+      }
+    } catch (e) {
+      console.warn("On-chain balance check failed:", (e as Error).message);
+    }
+
     // Calculate health factor
     const healthFactor =
       (collateralAmount * liquidationThreshold) / borrowedAmount;
