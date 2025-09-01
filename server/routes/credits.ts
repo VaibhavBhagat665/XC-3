@@ -91,11 +91,10 @@ export const transferCredits: RequestHandler = async (req, res) => {
       });
     }
 
-    // TODO: Implement blockchain transfer functionality
-    // This would require:
-    // 1. Checking user's actual token balance on blockchain
-    // 2. Executing smart contract transfer
-    // 3. Recording transaction in database
+    // Blockchain transfer flow to implement:
+    // 1. Check user's on-chain token balance
+    // 2. Execute smart contract transfer
+    // 3. Record transaction in database
 
     // For now, simulate the transfer
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -163,11 +162,10 @@ export const retireCredits: RequestHandler = async (req, res) => {
       });
     }
 
-    // TODO: Implement blockchain retire functionality
-    // This would require:
-    // 1. Checking user's actual token balance on blockchain
-    // 2. Executing smart contract burn/retire function
-    // 3. Recording retirement in database
+    // Blockchain retire flow to implement:
+    // 1. Check user's on-chain token balance
+    // 2. Execute smart contract burn/retire
+    // 3. Record retirement in database
 
     // For now, simulate the retirement
     await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -255,15 +253,10 @@ export const getUserTransactions: RequestHandler = async (req, res) => {
       );
     } catch (dbError) {
       console.warn(
-        "[DEBUG] Database failed, using local data for transactions:",
-        dbError.message,
+        "[DEBUG] Database failed loading user transactions:",
+        dbError instanceof Error ? dbError.message : String(dbError),
       );
-      // Fallback to local data
-      transactions = localData.getUserTransactions(
-        address,
-        parseInt(limit as string),
-        parseInt(offset as string),
-      );
+      transactions = [];
     }
 
     console.log("[DEBUG] Returning transactions:", transactions.length);
