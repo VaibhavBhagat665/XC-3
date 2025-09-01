@@ -64,6 +64,7 @@ export default function Lending() {
   const [positions, setPositions] = useState<LendingPosition[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableAssets, setAvailableAssets] = useState<CollateralAsset[]>([]);
+  const [avgPrice, setAvgPrice] = useState<number>(25);
 
   const [selectedAsset, setSelectedAsset] = useState<CollateralAsset | null>(
     null,
@@ -83,6 +84,41 @@ export default function Lending() {
   const [repayData, setRepayData] = useState({
     amount: "",
   });
+
+  // Load available collateral assets from wallet balances
+  useEffect(() => {
+    const loadAssets = async () => {
+      if (!isConnected || !address) {
+        setAvailableAssets([]);
+        return;
+      }
+      try {
+        const [balResp, stats] = await Promise.all([
+          import("../lib/api").then(m => m.creditsApi.getUserBalance(address)),
+          import("../lib/api").then(m => m.marketApi.getStats?.()).catch(() => null),
+        ]);
+        if (stats && (stats as any).success && (stats as any).data?.averagePrice) {
+          setAvgPrice((stats as any).data.averagePrice);
+        }
+        if (balResp.success && Array.isArray(balResp.data)) {
+          const assets = balResp.data.map((c: any) => ({
+            tokenId: c.creditId,
+            projectName: c.projectName || `Token #${c.tokenId}`,
+            amount: Number(c.amount),
+            currentPrice: Number((stats as any)?.data?.averagePrice || 25),
+            methodology: c.methodology,
+            vintage: c.vintage,
+          }));
+          setAvailableAssets(assets);
+        } else {
+          setAvailableAssets([]);
+        }
+      } catch {
+        setAvailableAssets([]);
+      }
+    };
+    loadAssets();
+  }, [isConnected, address]);
 
   // Live updates: SSE for user positions with 5s polling fallback
   useEffect(() => {
@@ -212,6 +248,13 @@ export default function Lending() {
       const amount = parseFloat(depositData.amount);
       const borrowAmount = parseFloat(depositData.borrowAmount || "0");
       const collateralValue = amount * selectedAsset.currentPrice;
+      const maxBorrow = collateralValue * 0.6; // 60% LTV
+      if (borrowAmount > maxBorrow) {
+        throw new Error(`Borrow exceeds max capacity ($${maxBorrow.toFixed(2)})`);
+      }
+      if (amount > selectedAsset.amount) {
+        throw new Error("Insufficient collateral balance");
+      }
 
       // Call API to create lending position
       const response = await lendingApi.createPosition({
