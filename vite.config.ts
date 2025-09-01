@@ -61,8 +61,8 @@ function expressPlugin(): Plugin {
     name: "express-plugin",
     apply: "serve", // Only apply during development (serve mode)
     async configureServer(server) {
-      const { createServer } = await import("./server/index.ts");
-      const app = createServer();
+      const mod: any = await server.ssrLoadModule("/server/index.ts");
+      const app = mod.createServer();
 
       // Add Express app as middleware to Vite dev server BEFORE SPA fallback
       // This ensures API routes are handled before the frontend routing
