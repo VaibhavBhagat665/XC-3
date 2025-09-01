@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
-import { carbonCreditQueries, activityQueries } from "../lib/database";
-import { localData } from "../lib/localData";
+import { carbonCreditQueries, activityQueries, query } from "../lib/database";
+import { readErc1155Balance } from "../lib/web3";
 
 // Get user credit balances
 export const getUserBalance: RequestHandler = async (req, res) => {
@@ -16,14 +16,52 @@ export const getUserBalance: RequestHandler = async (req, res) => {
 
     console.log("[DEBUG] Getting credit balance for:", address);
 
-    // Use local data for user balances
-    const balances = localData.getUserBalances(address);
-    console.log("[DEBUG] Returning credit balances:", balances.length);
+  // Load tokens and metadata from DB to check balances against
+  const result = await query(
+    `SELECT cc.id as credit_id, cc.token_id, cc.chain_id, cc.contract_address, cc.project_id,
+            p.name as project_name, p.vintage_year, p.methodology
+     FROM carbon_credits cc
+     JOIN projects p ON p.id = cc.project_id`
+  );
+  const rows = result.rows as Array<{
+    credit_id: number;
+    token_id: number;
+    chain_id: number;
+    contract_address: string;
+    project_id: number;
+    project_name: string;
+    vintage_year: number;
+    methodology: string;
+  }>;
 
-    res.json({
-      success: true,
-      data: balances,
-    });
+  const balances: any[] = [];
+  for (const r of rows) {
+    const bal = await readErc1155Balance(
+      Number(r.chain_id),
+      r.contract_address as any,
+      address as any,
+      BigInt(r.token_id),
+    );
+    if (bal && bal > 0n) {
+      balances.push({
+        creditId: r.credit_id,
+        tokenId: r.token_id,
+        amount: Number(bal),
+        chainId: r.chain_id,
+        contract: r.contract_address,
+        projectId: r.project_id,
+        projectName: r.project_name,
+        vintage: r.vintage_year,
+        methodology: r.methodology,
+      });
+    }
+  }
+  console.log("[DEBUG] Returning credit balances:", balances.length);
+
+  res.json({
+    success: true,
+    data: balances,
+  });
   } catch (error) {
     console.error("Error fetching user balance:", error);
     res.status(500).json({
