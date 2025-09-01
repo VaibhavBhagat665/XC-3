@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 import { carbonCreditQueries, activityQueries, query } from "../lib/database";
-import { readErc1155Balance } from "../lib/web3";
+import { readErc1155Balance } from "../lib/web3.ts";
 
 // Get user credit balances
 export const getUserBalance: RequestHandler = async (req, res) => {
