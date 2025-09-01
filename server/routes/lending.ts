@@ -102,7 +102,7 @@ export const createPosition: RequestHandler = async (req, res) => {
 
     // Ensure user owns enough on-chain balance for collateral
     try {
-      const { readErc1155Balance } = await import("../lib/web3");
+      const { readErc1155Balance } = await import("../lib/web3.ts");
       const bal = await readErc1155Balance(
         Number(credit.chain_id),
         credit.contract_address as any,
