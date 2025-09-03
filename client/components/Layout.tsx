@@ -139,7 +139,7 @@ function Footer() {
           </div>
 
           {/* Community */}
-          <div className="space-y-6">
+{/*           <div className="space-y-6">
             <h4 className="text-xl font-bold text-foreground flex items-center">
               <Users className="w-5 h-5 mr-2 text-purple-400" />
               Community
@@ -163,7 +163,7 @@ function Footer() {
                 );
               })}
             </div>
-          </div>
+          </div> */}
 
           {/* Mission */}
           <div className="space-y-6">
@@ -193,7 +193,7 @@ function Footer() {
             {/* Left side */}
             <div className="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-8">
               <p className="text-sm text-muted-foreground font-medium">
-                © 2024 XC3 Protocol. Built with 💚 for the planet.
+                © 2025 XC3 Protocol. Built with 💚 for the planet.
               </p>
               <div className="flex items-center space-x-4 text-xs">
                 <div className="flex items-center space-x-2 px-3 py-1 bg-cyan-400/10 rounded-full border border-cyan-400/20">
