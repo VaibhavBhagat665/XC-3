@@ -16,13 +16,13 @@ const socialLinks = [
     color: "from-gray-400 to-slate-400",
     hoverColor: "hover:text-gray-300",
   },
-  {
-    name: "Demo Video",
-    icon: Youtube,
-    href: "https://a6e65c76b17a4526b10a50d4149de5f4-42956381-2536-49cb-8e92-438072.fly.dev/",
-    color: "from-red-400 to-pink-400",
-    hoverColor: "hover:text-red-300",
-  },
+  // {
+  //   name: "Demo Video",
+  //   icon: Youtube,
+  //   href: "https://a6e65c76b17a4526b10a50d4149de5f4-42956381-2536-49cb-8e92-438072.fly.dev/",
+  //   color: "from-red-400 to-pink-400",
+  //   hoverColor: "hover:text-red-300",
+  // },
   {
     name: "LinkedIn",
     icon: Linkedin,
@@ -150,7 +150,7 @@ export function Footer() {
               className="flex flex-col items-center gap-4"
             >
               <div className="text-muted-foreground text-center">
-                © 2024 XC3. All rights reserved.
+                © 2025 XC3. All rights reserved.
               </div>
               <div className="flex items-center space-x-2 text-sm text-purple-400">
                 <span>Built with</span>
